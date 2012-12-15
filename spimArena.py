@@ -2,7 +2,7 @@ from subprocess import Popen;
 from subprocess import PIPE;
 import sys
 try:
-    from collections import Counter
+    from collections import Counater
 except ImportError:
     try:
         from recipe5766111 import Counter
@@ -83,7 +83,7 @@ class game() :
        
         try :
             inline= Popen("./QtSpimbot -file "+playerOne+" -file2 "+playerTwo
-                         + " -randomseed "+gameSeed+ " -randommap  -run -exit_when_done -maponly -quiet ",\
+                         + " -randomseed "+gameSeed+ " -randommap -tournament -run -exit_when_done -maponly -quiet ",\
                               stdout=PIPE, shell=True).stdout
             string = "not"
             while(not (string == '')) :
@@ -119,7 +119,7 @@ class game() :
                 print "using alarm"
                 signal.alarm(self.time_out)
             mapSeed=str(self.rand.randint(1355029990,1355039990))
-#use a random number that is simler to the output of C rand()
+#use a random number that is similar to the output of C rand()
             self.logger.output(playerOne +" vs. "+playerTwo +" game "+str(x+1) +" out of "
                                +str(self.roundsPerGame) + " on map seed " + mapSeed)
             roundwinner=self.runMatch(playerOne, playerTwo, mapSeed)
@@ -177,7 +177,7 @@ class basicTree() :
                 keepList.append(winner)
                 self.ranking[self.looserList[x]]=self.round
         if len(self.looserList) ==3 :
-            keepList.append(self.looserList[2]) #for semi-final lossermach to keep the thrird team.
+            keepList.append(self.looserList[2]) #for semi-final lossermach to keep the third team.
         self.looserList=keepList
         return self.winnerBracket()
                 
@@ -227,12 +227,12 @@ def usage() :
 
  usage: spimArena [-r rounds-per-game] [-t timeout] [-o output_file] file
 
- -r : number of rounds per game. defalt is 1
+ -r : number of rounds per game. default is 1
  -t : set a timeout on a match. 0 will disable it.  default is 0   
-(dont use it!  if a match takes to long just override it and set a winner")
+(don't use it!  if a match takes to long just override it and set a winner")
  -o : set the log file to save the outcome\
 
-the input file shoud be a list the the teams competing 
+the input file should be a list the the teams competing 
 
 *note don't chose an even number of rounds per game. 
 If you do and there is a tie the winner with be chosen arbitrarily 
