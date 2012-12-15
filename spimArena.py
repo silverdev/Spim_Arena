@@ -10,7 +10,7 @@ except ImportError:
         print "Counter not found"
         sys.exit(1)
 
-
+import getopt
 import time
 import random
 import signal
@@ -55,54 +55,61 @@ class game() :
          self.rand.seed(seed)
          self.logger=Logger(logfile)
          
-         
+    def manual_override(self,playerOne,playerTwo,gameSeed) :
+        print ""
+        print "manual override enabled"
+        while(True):
+            print "1) declare "+playerOne+" the winner \n" + \
+                "2) declare "+playerTwo+" the winner\n" + \
+                "3) reload game on the same map \n"+ \
+                "4) reload game on new map \n" + \
+                "q) quit spimArena"
+            command=raw_input("--->")
+            if command == "1" :
+                return playerOne
+            if command == "2" :
+                return playerTwo
+            if command == "3" :
+                return self.runMatch(playerOne,playerTwo,gameSeed)
+            if command == "4" :
+                return self.runMatch(playerOne,playerTwo,str(self.rand.randint(1355029990,1355039990)))
+            if command == "q" :
+                sys.exit(0)
+            print "invaled key"
+  
+        
     def runMatch(self,playerOne, playerTwo,gameSeed) :
 
        
         try :
             inline= Popen("./QtSpimbot -file "+playerOne+" -file2 "+playerTwo
-                         + " -randomseed "+gameSeed+ " -randommap  -run -exit_when_done -maponly -quiet ", stdout=PIPE, shell=True).stdout
+                         + " -randomseed "+gameSeed+ " -randommap  -run -exit_when_done -maponly -quiet ",\
+                              stdout=PIPE, shell=True).stdout
             string = "not"
             while(not (string == '')) :
                 string = inline.readline()
                 if string[:7] == "winner:"  :
                     return string[8:-1]
-            return "error, What? This should not be so?"
+
+            print "\nerror, What? This should not be so? Did you quit qtSpim?"
+            return self.manual_override(playerOne,playerTwo,gameSeed)
+
         except KeyboardInterrupt:
-            print ""
-            print "manual override enabled"
-            while(True):
-                print "1) declare "+playerOne+" the winner \n" + \
-                    "2) declare "+playerTwo+" the winner\n" + \
-                    "3) reload game on the same map \n"+ \
-                    "4) reload game on new map \n" + \
-                    "q) quit spimArena"
-                command=raw_input("--->")
-                if command == "1" :
-                    return playerOne
-                if command == "2" :
-                    return playerTwo
-                if command == "3" :
-                    return self.runMatch(playerOne,playerTwo,gameSeed)
-                if command == "4" :
-                    return self.runMatch(playerOne,playerTwo,str(self.rand.randint(1355029990,1355039990)))
-                if command == "q" :
-                    sys.exit(0)
-                print "invaled key"
+            return self.manual_override(playerOne,playerTwo,gameSeed)
 
         except Alarm:
             print "timeOut"
             killerror= Popen("killall QtSpimbot", stdout=PIPE, shell=True).stdout
             print killerror.read()
             time.sleep(1)
-            return "fail" 
+            return "#fail#" 
        
     def gameRunner(self,playerOne, playerTwo):
         count=Counter()
-        if playerOne =="#byeGame#" :
+        if playerOne in ("#byeGame#", "#fail#") :
             self.logger.output(playerTwo+" wins from byegame")
             return playerTwo
-        if playerTwo =="#byeGame#" :
+        if playerTwo in ("#byeGame#", "#fail#") :
             self.logger.output(playerOne+" wins from byegame")
             return playerOne
 
@@ -207,21 +214,63 @@ class basicTree() :
 
 def teamReader(thefile) :
        teams = []
-       with open ("teams") as t :
+       with open (thefile) as t :
            while True :
                string=t.readline()
                if string == "" :
                    t.close()
                    return teams
                teams.append(string[:-1])
-           
-      
+def usage() :
+    print """ Spim Arena -a tournament runner for spimbot 
+-Sam Laane
 
-if __name__ == "__main__" :
-    
-    
-    theGame= game(1, "gameLog")
-    theTeams=teamReader("teams")
+ usage: spimArena [-r rounds-per-game] [-t timeout] [-o output_file] file
+
+ -r : number of rounds per game. defalt is 1
+ -t : set a timeout on a match. 0 will disable it.  default is 0   
+(dont use it!  if a match takes to long just override it and set a winner")
+ -o : set the log file to save the outcome\
+
+the input file shoud be a list the the teams competing 
+
+*note don't chose an even number of rounds per game. 
+If you do and there is a tie the winner with be chosen arbitrarily 
+ """
+
+def main() :
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hr:t:o:", ["help", "logfile=", 
+                                                             "--timeout","--rounds-per-game"])
+    except getopt.GetoptError as err:
+        # print help information and exit:
+        print str(err) # will print something like "option -a not recognized"
+        usage()
+        sys.exit(2)
+    output = None
+    timeout=0
+    match_num =1   
+    for o, a in opts:
+        if o in ("-r", "--rounds-per-game"):
+            match_num=a
+        elif o in ("-t", "--timeout") :
+            timeout=a
+        elif o in ("-h", "--help"):
+            usage()
+            sys.exit()
+        elif o in ("-o", "--logfile"):
+            output = a
+        else:
+            assert False, "unknown option"
+    try :
+        list_of_teams = args[0]
+    except IndexError: 
+        print "missing team list"
+        sys.exit(1)
+    theGame= game(match_num, output, timeout)
+    theTeams=teamReader(list_of_teams)
     tournament=basicTree(theGame,theTeams)
     print tournament.rungame().most_common()
-    
+
+if __name__ == "__main__" :    
+   main()
