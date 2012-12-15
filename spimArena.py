@@ -206,9 +206,10 @@ class basicTree() :
         playerCount =len(self.bracket)
         treesize= 2**(1+int(log(playerCount,2)))
         byrounds=treesize-playerCount
+        random.shuffle(self.bracket)  #ensures fairness by randomizing the bracket
         for x in xrange(0,byrounds) :
             self.bracket.append("#byeGame#")
-        random.shuffle(self.bracket)  #ensures fairness by randomizing the bracket
+        #add bye Game is such a way that they will all face a real player
         self.game.logger.output(self.winnerBracket())
         return self.ranking
 
